@@ -5,13 +5,15 @@ LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
 
 // Pinos
 const int ldrPin = A0;     // Pino analógico conectado ao sensor LDR
-const int ledPin = 3;      // Pino digital conectado ao LED
-const int buzzerPin = 4;   // Pino digital conectado ao buzzer
+const int ledVermelho = 3; // Pino digital conectado ao LED vermelho
+const int ledAmarelo = 4;  // Pino digital conectado ao LED amarelo
+const int ledVerde = 5;    // Pino digital conectado ao LED verde
+const int buzzerPin = 6;   // Pino digital conectado ao buzzer
 const int botaoPin = 2;    // Pino digital conectado ao botão
 
 // Níveis de luminosidade
 int nivelLuminosidade = 0; // Variável para armazenar o valor lido do LDR
-int nivelMin = 200;        // Valor mínimo padrão de luminosidade
+int nivelMin = 0;          // Valor mínimo padrão de luminosidade
 int nivelMax = 800;        // Valor máximo padrão de luminosidade
 
 // Variáveis de controle de configuração
@@ -20,19 +22,21 @@ int etapaConfig = 0;       // Etapa atual da configuração (mínimo ou máximo)
 
 // Caractere personalizado para o "H" estilizado
 byte Hhunter[8] = {
-  B10001, // Linha 1 do caractere
-  B10001, // Linha 2 do caractere
-  B11111, // Linha 3 do caractere
-  B10001, // Linha 4 do caractere
-  B10001, // Linha 5 do caractere
-  B10001, // Linha 6 do caractere
-  B10001, // Linha 7 do caractere
-  B00000  // Linha 8 do caractere
+  B10001,
+  B10001,
+  B11111,
+  B10001,
+  B10001,
+  B10001,
+  B10001,
+  B00000
 };
 
 void setup() {
   // Configura os pinos como entrada ou saída
-  pinMode(ledPin, OUTPUT);
+  pinMode(ledVermelho, OUTPUT);
+  pinMode(ledAmarelo, OUTPUT);
+  pinMode(ledVerde, OUTPUT);
   pinMode(buzzerPin, OUTPUT);
   pinMode(botaoPin, INPUT_PULLUP); // Botão com resistor pull-up interno
 
@@ -56,11 +60,25 @@ void loop() {
     lcd.print(nivelLuminosidade);
     lcd.print("     "); // Limpa o restante da linha com espaços
 
-    // Verifica se o nível de luminosidade excede o máximo permitido
-    if (nivelLuminosidade > nivelMax) {
+    // Classifica os níveis de luminosidade
+    if (nivelLuminosidade < 150) {
+      lcd.setCursor(4, 1);
+      lcd.print("= ESCURO"); // Exibe "ESCURO" no LCD
       digitalWrite(ledPin, HIGH); // Acende o LED
       tone(buzzerPin, 1000);      // Ativa o buzzer com frequência de 1000 Hz
+    } else if (nivelLuminosidade < 300) {
+      lcd.setCursor(4, 1);
+      lcd.print("= FRACO"); // Exibe "FRACO" no LCD
+      digitalWrite(ledPin, LOW);  // Apaga o LED
+      noTone(buzzerPin);          // Desativa o buzzer
+    } else if (nivelLuminosidade < 450) {
+      lcd.setCursor(4, 1);
+      lcd.print("= MODERADO"); // Exibe "MODERADO" no LCD
+      digitalWrite(ledPin, LOW);  // Apaga o LED
+      noTone(buzzerPin);          // Desativa o buzzer
     } else {
+      lcd.setCursor(4, 1);
+      lcd.print("= FORTE"); // Exibe "FORTE" no LCD
       digitalWrite(ledPin, LOW);  // Apaga o LED
       noTone(buzzerPin);          // Desativa o buzzer
     }
@@ -74,7 +92,7 @@ void configurarNiveis() {
   modoConfig = true; // Ativa o modo de configuração
   etapaConfig = 1;   // Define a etapa inicial como configuração do nível mínimo
   lcd.clear();
-  lcd.print("Config. Min..."); // Exibe mensagem de configuração do mínimo
+  lcd.print("Config. Min...");
   delay(1000);
   lcd.clear();
   lcd.print("Lum: ");
@@ -88,7 +106,7 @@ void configurarNiveis() {
     int leitura = analogRead(ldrPin);
     lcd.setCursor(0, 1);
     lcd.print(leitura);
-    lcd.print("     "); // Limpa o restante da linha com espaços
+    lcd.print("     ");
     delay(200);
   }
 
@@ -99,7 +117,7 @@ void configurarNiveis() {
   delay(1000);
 
   lcd.clear();
-  lcd.print("Config. Max..."); // Exibe mensagem de configuração do máximo
+  lcd.print("Config. Max...");
   delay(1000);
 
   // Aguarda o botão ser solto
@@ -110,7 +128,7 @@ void configurarNiveis() {
     int leitura = analogRead(ldrPin);
     lcd.setCursor(0, 1);
     lcd.print(leitura);
-    lcd.print("     "); // Limpa o restante da linha com espaços
+    lcd.print("     ");
     delay(200);
   }
 
@@ -122,6 +140,23 @@ void configurarNiveis() {
 
   modoConfig = false; // Sai do modo de configuração
   lcd.clear();
+}
+
+// Função para ativar LEDs e buzzer
+void ativarAlerta(int ledPin, bool buzzerAtivo) {
+  // Desliga todos os LEDs e o buzzer antes de ativar o alerta
+  digitalWrite(ledVermelho, LOW);
+  digitalWrite(ledAmarelo, LOW);
+  digitalWrite(ledVerde, LOW);
+  digitalWrite(buzzerPin, LOW);
+
+  // Ativa o LED correspondente
+  digitalWrite(ledPin, HIGH);
+
+  // Ativa o buzzer, se necessário
+  if (buzzerAtivo) {
+    tone(buzzerPin, 262, 500); // Frequência de 262 Hz (nota C4) por 500 ms
+  }
 }
 
 // Animação do logo HUNTER no LCD
